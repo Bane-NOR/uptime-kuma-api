@@ -1,0 +1,39 @@
+name: CodeQL and Tag
+on:
+  push:
+    branches:
+      - main
+      - master
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    strategy:
+      matrix:
+        language:
+          - python
+          - javascript-typescript
+          - actions
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          queries: security-extended
+          languages: ${{ matrix.language }}
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+  create-tag:
+    needs: [security-scan]
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Create tag
+        run: |
+          git tag v1
+          git push origin v1 --force
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
